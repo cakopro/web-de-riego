@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orquídeas</title>
+    <link rel="stylesheet" href="home.css">
+</head>
+
+<body>
+    <header>
+        <h1>Panel de control - Orquídeas</h1>
+    </header>
+
+    <main>
+        <div class="centrar">
+            <div class="sidebar">
+                <h2>Orquídeas</h2>
+                <ul>
+                    <li onclick="mostrar('calendario')">Calendario</li>
+                    <li onclick="mostrar('datos')">Datos</li>
+                    <li onclick="mostrar('regado')">Regado</li>
+                </ul>
+            </div>
+
+            <div class="contenido-columna-derecha">
+                <!--Calendario -->
+                <div id="calendario" class="seccion">
+                    <div class="calendario-contenedor">
+                        <h3 style="grid-column: 1 / -1;">Calendario de Riego</h3> <!-- H3 ocupa toda la fila -->
+
+                        <div class="izquierda">
+                            <form id="formRiego" onsubmit="registrarRiego(event)">
+                                <input type="datetime-local" id="inputCalendario" name="calendario">
+                                <button type="submit">Registrar Riego</button>
+                            </form>
+                        </div>
+
+                        <div class="derecha">
+                            <p>Fecha y hora del siguiente riego: <%= data ? data.fecha : 'No fecha programada del siguiente riego' %></p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Datos -->
+                <div id="datos" class="seccion" style="display: none;">
+                    <h3>Datos Históricos</h3>
+
+                </div>
+
+                <!--Regado -->
+                <div id="regado" class="seccion" style="display: none;">
+                    <h3>Regado</h3>
+
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>© 2025 AgroVerde - Sistema de Riego Inteligente</p>
+    </footer>
+
+    <script>
+        // Cambiar entre secciones (mostrar/ocultar)
+        function mostrar(seccion) {
+            // Oculta todas las secciones
+            const secciones = document.querySelectorAll('.seccion');
+            secciones.forEach(s => s.style.display = 'none');
+
+            // Muestra solo la sección seleccionada
+            const activa = document.getElementById(seccion);
+            activa.style.display = 'block';
+        }
+
+        function registrarRiego(event) {
+            event.preventDefault(); 
+            const fechaHora = document.getElementById('inputCalendario').value;
+
+            if (!fechaHora) {
+                alert("Selecciona fecha y hora antes de registrar");
+                return;
+            }
+
+            fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ calendario: fechaHora })
+            })
+                .then(res => {
+                    if (res.ok) window.location.reload();
+                })
+                .catch(err => console.error(err));
+        }
+
+    </script>
+
+</body>
+
+</html>
