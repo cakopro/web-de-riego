@@ -144,3 +144,69 @@ footer {
   font-size: 0.9em;
 }
 
+
+/* ====== SECCIÓN DE MONITOREO DE ORQUÍDEAS ====== */
+#datos {
+  text-align: center;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+#datos h3 {
+  color: #4f4caf;
+  margin-bottom: 20px;
+  font-size: 1.4em;
+}
+
+#graficaTemperaturaHumedad {
+  display: block;
+  margin: 0 auto 25px auto;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+#datos label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+#datos div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+#datos input[type="number"],
+#datos select {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#datos button {
+  background-color: #4f4caf;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+#datos button:hover {
+  background-color: #3b3a8a;
+}
+
+#resultado {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+}

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orquídeas</title>
     <link rel="stylesheet" href="home.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -38,7 +39,9 @@
                         </div>
 
                         <div class="derecha">
-                            <p>Fecha y hora del siguiente riego: <%= data ? data.fecha : 'No fecha programada del siguiente riego' %></p>
+                            <p>Fecha y hora del siguiente riego: <%= data ? data.fecha
+                                    : 'No fecha programada del siguiente riego' %>
+                            </p>
                         </div>
                     </div>
 
@@ -46,8 +49,19 @@
 
                 <!-- Datos -->
                 <div id="datos" class="seccion" style="display: none;">
-                    <h3>Datos Históricos</h3>
+                    <h3>Monitoreo Ambiental de Orquídeas</h3>
+                    <canvas id="graficaTemperaturaHumedad" width="400" height="300"></canvas>
 
+                    <label for="frecuenciaValor">Frecuencia de registro:</label>
+                    <div>
+                        <input type="number" id="frecuenciaValor" min="1" max="24" value="1">
+                        <select id="frecuenciaUnidad">
+                            <option value="minutos">Minutos</option>
+                            <option value="horas" selected>Horas</option>
+                        </select>
+                    </div>
+                    <button onclick="guardarFrecuencia()">Guardar</button>
+                    <p id="resultado"></p>
                 </div>
 
                 <!--Regado -->
@@ -61,39 +75,162 @@
     <footer>
         <p>© 2025 AgroVerde - Sistema de Riego Inteligente</p>
     </footer>
-
     <script>
-        // Cambiar entre secciones (mostrar/ocultar)
+        let chart; // referencia global a la gráfica
+        let intervaloActualizacion;
+        let frecuenciaMinutos = 60;
+        let etiquetasTiempo = [];
+        let contador = 0;
+
+        // Cambiar entre secciones
         function mostrar(seccion) {
-            // Oculta todas las secciones
             const secciones = document.querySelectorAll('.seccion');
             secciones.forEach(s => s.style.display = 'none');
 
-            // Muestra solo la sección seleccionada
             const activa = document.getElementById(seccion);
             activa.style.display = 'block';
+
+            if (seccion === "datos") {
+                if (!chart) {
+                    generarGrafica();
+                }
+            }
         }
 
+        // Enviar el formulario del riego
         function registrarRiego(event) {
-            event.preventDefault(); 
+            event.preventDefault();
             const fechaHora = document.getElementById('inputCalendario').value;
-
             if (!fechaHora) {
                 alert("Selecciona fecha y hora antes de registrar");
                 return;
             }
 
-            fetch('/', {
+            fetch('/registrarRiego', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ calendario: fechaHora })
             })
-                .then(res => {
-                    if (res.ok) window.location.reload();
+                .then(res => res.json())
+                .then(data => {
+                    if (data.mensaje) {
+                        alert(data.mensaje);
+                        document.querySelector(".derecha p").textContent =
+                            `Fecha y hora del siguiente riego: ${new Date(data.fecha_riego).toLocaleString('es-CL')}`;
+                    }
                 })
                 .catch(err => console.error(err));
         }
 
+        // Guardar frecuencia y reiniciar el temporizador
+        function guardarFrecuencia() {
+            const valor = parseFloat(document.getElementById("frecuenciaValor").value);
+            const unidad = document.getElementById("frecuenciaUnidad").value;
+
+            // Conversión a minutos
+            if (unidad === "horas") {
+                frecuenciaMinutos = valor * 60;
+            } else {
+                frecuenciaMinutos = valor;
+            }
+
+            if (frecuenciaMinutos > 1440) {
+                alert("La frecuencia no puede ser mayor a 24 horas.");
+                return;
+            }
+
+            document.getElementById("resultado").textContent =
+                `Frecuencia guardada: cada ${frecuenciaMinutos} minutos.`;
+
+            // Reinicia el intervalo si ya existía
+            if (intervaloActualizacion) clearInterval(intervaloActualizacion);
+            intervaloActualizacion = setInterval(actualizarGrafica, frecuenciaMinutos * 60 * 1000);
+        }
+
+        // Crear gráfica vacía
+        function generarGrafica() {
+            const ctx = document.getElementById("graficaTemperaturaHumedad").getContext("2d");
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: [], // sin datos iniciales
+                    datasets: [
+                        {
+                            label: "Temperatura (°C)",
+                            data: [],
+                            borderColor: "red",
+                            backgroundColor: "rgba(255, 0, 0, 0.1)",
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: "Humedad (%)",
+                            data: [],
+                            borderColor: "blue",
+                            backgroundColor: "rgba(0, 0, 255, 0.1)",
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y1: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Temperatura (°C)' }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Humedad (%)' },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            title: { display: true, text: 'Tiempo transcurrido' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Monitoreo Ambiental de Orquídeas' }
+                    }
+                }
+            });
+
+            // iniciar con actualización automática cada hora por defecto
+            intervaloActualizacion = setInterval(actualizarGrafica, frecuenciaMinutos * 60 * 1000);
+        }
+
+        // Obtener datos del backend y actualizar la gráfica
+        function actualizarGrafica() {
+
+
+            fetch('/generarDatos', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    contador++;
+                    const etiqueta =
+                        frecuenciaMinutos >= 60
+                            ? `${contador * (frecuenciaMinutos / 60)}h`
+                            : `${contador * frecuenciaMinutos}m`;
+
+                    etiquetasTiempo.push(etiqueta);
+
+                    chart.data.labels = etiquetasTiempo;
+                    chart.data.datasets[0].data.push(data.temperatura);
+                    chart.data.datasets[1].data.push(data.humedad);
+                    chart.update();
+                })
+                .catch(err => console.error('Error al actualizar la gráfica:', err));
+        }
+
+
+        window.onload = () => {
+            mostrar('calendario');
+        };
     </script>
 
 </body>

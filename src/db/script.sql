@@ -9,9 +9,7 @@ CREATE TABLE Riegos(
 
 CREATE TABLE CondicionesAmbientales(
     id_condicion INT AUTO_INCREMENT PRIMARY KEY,
-    id_riego INT,
-    fecha DATETIME NOT NULL,
+    fecha DATETIME NOT NULL DEFAULT NOW(),
     humedad INT CHECK (humedad BETWEEN 0 AND 100),
-    temperatura INT,
-    FOREIGN KEY (id_riego) REFERENCES Riegos(id_riego) ON DELETE CASCADE
+    temperatura INT
 );

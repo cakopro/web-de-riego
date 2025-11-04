@@ -29,6 +29,20 @@ function agregarRegado(datos){
     })
 }
 
+function guardarCondicion({ id_riego, temperatura, humedad }) {
+    return new Promise((resolve, reject) => {
+        coneccion.query(
+            `INSERT INTO CondicionesAmbientales (id_riego, fecha, temperatura, humedad)
+             VALUES (?, NOW(), ?, ?)`,
+            [id_riego || null, temperatura, humedad],
+            (error, resultado) => {
+                if (error) return reject(error);
+                resolve(resultado);
+            }
+        );
+    });
+}
 
 
-module.exports = {traerFecha, agregarRegado}
+
+module.exports = {traerFecha, agregarRegado, guardarCondicion}
